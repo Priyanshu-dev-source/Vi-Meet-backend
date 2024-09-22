@@ -39,16 +39,20 @@ app.post("/signup", async (req,res)=>{
 })
 
 app.post("/login", async (req, res)=>{
-    const {email, password} = req.body
-    const user = await UserModel.findOne({email})
-    if(user){
-        const passKey = await bcrypt.compare(password, users.password)
-        if(passKey){
-            res.status(200).json("Logged in succesfully")
+    try{
+        const {email, password} = req.body
+        const user = await UserModel.findOne({email})
+        if(user){
+            const passKey = await bcrypt.compare(password, user.password)
+            if(passKey){
+                res.json("Success")
+            }else{
+                res.status(401).json("Password does not match")
+            }
         }else{
-            res.status(401).json("Password does not match")
+            res.status(401).json("No records Found")
         }
-    }else{
-        res.status(401).json("No records Found")
+    }catch(error){
+        res.status(500).json({error:error.message})
     }
 })
