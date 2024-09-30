@@ -3,14 +3,20 @@ const mongoose = require("mongoose")
 const bcrypt = require("bcrypt")
 const cors = require("cors")
 const dotenv = require("dotenv")
+const session = require("express-session")
+const MongoStore = require("connect-mongo")
 const UserModel = require("./model/user")
 
 dotenv.config()
 const app = express()
-app.use(cors())
+app.use(cors(
+    {
+        origin:process.env.FRONTEND_URL,
+        credentials: true
+    }
+))
 
 app.use(express.json())
-
 
 mongoose.connect(process.env.MONGO_URI)
     .then(()=> console.log("Connected to MongoDB"))
@@ -19,6 +25,18 @@ mongoose.connect(process.env.MONGO_URI)
 app.listen(process.env.PORT,()=>{
     console.log(`Server is started at ${process.env.PORT}`)
 })
+
+app.use(session({
+    secret:process.env.SESSION_SECRET,
+    resave:false,
+    saveUninitialized:true,
+    store: MongoStore.create(
+        {
+            mongoUrl:process.env.MONGO_URI
+        }
+    ),
+    cookie:{ maxAge: 2*60*1000 }
+}))
 
 app.post("/signup", async (req,res)=>{
     try{
@@ -45,6 +63,7 @@ app.post("/login", async (req, res)=>{
         if(user){
             const passKey = await bcrypt.compare(password, user.password)
             if(passKey){
+                req.session.user = {id:user._id, name:user.name, email:user.email}
                 res.json("Success")
             }else{
                 res.status(401).json("Password does not match")
@@ -56,3 +75,11 @@ app.post("/login", async (req, res)=>{
         res.status(500).json({error:error.message})
     }
 })
+
+app.get("/user", (req, res) => {
+    if(req.session.user){
+        res.json({user: req.session.user})
+    }else{
+        res.status(401).json("Not authenticated")
+    }
+});
