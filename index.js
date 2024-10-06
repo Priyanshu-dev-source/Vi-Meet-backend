@@ -29,13 +29,15 @@ app.listen(process.env.PORT,()=>{
 app.use(session({
     secret:process.env.SESSION_SECRET,
     resave:false,
-    saveUninitialized:true,
+    saveUninitialized:false,
     store: MongoStore.create(
         {
             mongoUrl:process.env.MONGO_URI
         }
     ),
-    cookie:{ maxAge: 24*60*1000, secure : true, httpOnly: true }
+    ccookie: {
+        maxAge: 24 * 60 * 60 * 1000, 
+      }
 }))
 
 app.post("/signup", async (req,res)=>{
@@ -77,10 +79,9 @@ app.post("/login", async (req, res)=>{
 })
 
 app.get("/user", (req, res) => {
-    console.log("Request received at /user");
-    if (req.session.user) {
-        res.json({ user: req.session.user });
-    } else {
-        res.status(401).json("Not authenticated");
+    if(req.session.user){
+        res.json({user: req.session.user})
+    }else{
+        res.status(401).json("Not authenticated")
     }
 });
