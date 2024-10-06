@@ -35,7 +35,7 @@ app.use(session({
             mongoUrl:process.env.MONGO_URI
         }
     ),
-    cookie:{ maxAge: 2*60*1000 }
+    cookie:{ maxAge: 24*60*1000, secure : true, httpOnly: true }
 }))
 
 app.post("/signup", async (req,res)=>{
