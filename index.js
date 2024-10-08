@@ -78,7 +78,7 @@ app.post("/login", async (req, res)=>{
     }
 })
 
-app.get("/user", (req, res) => {
+app.post("/user", (req, res) => {
     if(req.session.user){
         res.json({user: req.session.user})
     }else{
