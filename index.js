@@ -9,12 +9,12 @@ const UserModel = require("./model/user")
 
 dotenv.config()
 const app = express()
-app.use(cors(
-    {
-        origin:process.env.FRONTEND_URL,
-        credentials: true
-    }
-))
+const corsOptions = {
+    origin: ['http://localhost:3000', 'https://vi-meet-app.vercel.app'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
+  };
+app.use(cors(corsOptions));
 
 app.use(express.json())
 
