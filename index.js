@@ -10,10 +10,9 @@ const UserModel = require("./model/user")
 dotenv.config()
 const app = express()
 const corsOptions = {
-    origin: ['http://localhost:3000', 'https://vi-meet-app.vercel.app'],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true,
-  };
+    origin: ['http://localhost:3000', 'https://vi-meet-app.vercel.app'], 
+    credentials: true, 
+};
 app.use(cors(corsOptions));
 
 app.use(express.json())
@@ -26,19 +25,33 @@ app.listen(process.env.PORT,()=>{
     console.log(`Server is started at ${process.env.PORT}`)
 })
 
+// app.use(session({
+//     secret:process.env.SESSION_SECRET,
+//     resave:false,
+//     saveUninitialized:false,
+//     store: MongoStore.create(
+//         {
+//             mongoUrl:process.env.MONGO_URI
+//         }
+//     ),
+//     ccookie: {
+//         maxAge: 24 * 60 * 60 * 1000, 
+//       }
+// }))
+
 app.use(session({
-    secret:process.env.SESSION_SECRET,
-    resave:false,
-    saveUninitialized:false,
-    store: MongoStore.create(
-        {
-            mongoUrl:process.env.MONGO_URI
-        }
-    ),
-    ccookie: {
-        maxAge: 24 * 60 * 60 * 1000, 
-      }
-}))
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: false,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_URI,
+    }),
+    cookie: {
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        secure: true, // Ensures cookies are sent only over HTTPS
+        sameSite: 'none', // Allows cross-origin cookie sharing
+    }
+}));
 
 app.post("/signup", async (req,res)=>{
     try{
