@@ -100,5 +100,18 @@ app.post("/login", async (req, res)=>{
 })
 
 app.post("/user", (req, res) => {
-    res.status(200).json({ message: "Route works without authentication", data: req.body });
+     const { email, password } = req.body;
+
+    // Log request body for debugging
+    console.log("Request Body:", req.body);
+
+    if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    // Simulate user data response
+    res.status(200).json({
+        message: "Route works without authentication",
+        data: { email, password }
+    });
 });
