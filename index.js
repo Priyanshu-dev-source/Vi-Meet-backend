@@ -92,8 +92,5 @@ app.post("/login", async (req, res)=>{
 })
 
 app.post("/user", (req, res) => {
-    console.log("Request Headers:", req.headers);
-    console.log("Request Body:", req.body);
-    res.status(200).send("Request received");
-    res.send(req.session.user);
+    res.status(200).json({ message: "Route works without authentication", data: req.body });
 });
