@@ -95,4 +95,5 @@ app.post("/user", (req, res) => {
     console.log("Request Headers:", req.headers);
     console.log("Request Body:", req.body);
     res.status(200).send("Request received");
+    res.send(req.session.user);
 });
