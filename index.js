@@ -92,9 +92,7 @@ app.post("/login", async (req, res)=>{
 })
 
 app.post("/user", (req, res) => {
-    if(req.session.user){
-        res.json({user: req.session.user})
-    }else{
-        res.status(401).json("Not authenticated")
-    }
+    console.log("Request Headers:", req.headers);
+    console.log("Request Body:", req.body);
+    res.status(200).send("Request received");
 });
