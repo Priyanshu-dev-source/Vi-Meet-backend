@@ -6,14 +6,22 @@ const dotenv = require("dotenv")
 const session = require("express-session")
 const MongoStore = require("connect-mongo")
 const UserModel = require("./model/user")
+const app = express()
 
 dotenv.config()
-const app = express()
-const corsOptions = {
-    origin: ['http://localhost:3000', 'https://vi-meet-app.vercel.app'], 
-    credentials: true, 
-};
-app.use(cors(corsOptions));
+// const corsOptions = {
+//     origin: ['http://localhost:3000', 'https://vi-meet-app.vercel.app'], 
+//     credentials: true, 
+// };
+// app.use(cors(corsOptions));
+
+app.use(cors({
+    origin: (origin, callback) => {
+        console.log("Origin:", origin);
+        callback(null, true); // Temporarily allow all origins
+    },
+    credentials: true
+}));
 
 app.use(express.json())
 
