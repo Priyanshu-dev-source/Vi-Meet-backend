@@ -1,100 +1,63 @@
-const express = require("express")
-const mongoose = require("mongoose")
-const bcrypt = require("bcrypt")
-const cors = require("cors")
-const dotenv = require("dotenv")
-const session = require("express-session")
-const MongoStore = require("connect-mongo")
-const UserModel = require("./model/user")
+const express = require("express");
+const path = require("path");
+const http = require("http");
+const { Server } = require("socket.io");
+const cors = require("cors");
 
-dotenv.config()
-const app = express()
-const corsOptions = {
-    origin: ['http://localhost:3000', 'https://vi-meet-app.vercel.app'], 
-    credentials: true, 
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"],
+  },
+});
+
+
+app.use(cors());
+app.use(express.json());
+
+app.use(express.static(path.resolve(__dirname, "../client")));
+app.get("*", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "../client", "index.html"));
+});
+
+const generateRoomId = () => {
+  const generateGroup = () =>
+    Math.random().toString(36).substring(2, 5); 
+  return `${generateGroup()}-${generateGroup()}-${generateGroup()}`;
 };
-app.use(cors(corsOptions));
 
-app.use(express.json())
+io.on("connection", (socket) => {
+  console.log("A user connected:", socket.id);
 
-mongoose.connect(process.env.MONGO_URI)
-    .then(()=> console.log("Connected to MongoDB"))
-    .catch(err => console.log("Failed to connect to MongoDB",err))
+  socket.emit("user-connection", io.engine.clientsCount);
 
-app.listen(process.env.PORT,()=>{
-    console.log(`Server is started at ${process.env.PORT}`)
-})
+  socket.on("create-room", (callback) => {
+    const roomId = generateRoomId();
+    socket.join(roomId);
+    console.log(`Room created: ${roomId}`);
+    callback(roomId);
+  });
 
-// app.use(session({
-//     secret:process.env.SESSION_SECRET,
-//     resave:false,
-//     saveUninitialized:false,
-//     store: MongoStore.create(
-//         {
-//             mongoUrl:process.env.MONGO_URI
-//         }
-//     ),
-//     ccookie: {
-//         maxAge: 24 * 60 * 60 * 1000, 
-//       }
-// }))
+  socket.on("user-connection-room",(userRoomId)=>{
+    socket.join(userRoomId);
+    console.log(`User connected to room: ${userRoomId}`);
+    socket.to(userRoomId).emit("user-joined", socket.id);
+  })
 
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    store: MongoStore.create({
-        mongoUrl: process.env.MONGO_URI,
-    }),
-    cookie: {
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
-        secure: true, // Ensures cookies are sent only over HTTPS
-        sameSite: 'none', // Allows cross-origin cookie sharing
-    }
-}));
+  socket.on("leave-room", (roomId)=>{
+    socket.leave(roomId);
+    socket.to(roomId).emit("user-left", socket.id);
+    console.log(`User left room: ${roomId}`);
+  })
 
-app.post("/signup", async (req,res)=>{
-    try{
-        const {name, email, password} = req.body;
-        const existingUser = await UserModel.findOne({ email });
-        console.log(existingUser)
-        if(existingUser){
-            return res.status(400).json({ error: "Email already exists"}) 
-        }
+  socket.on("disconnect", () => {
+    console.log("A user disconnected:", socket.id);
+  });
+});
 
-        const hashedPassword = await bcrypt.hash(password, 10)
-        const newUser = new UserModel({name, email, password: hashedPassword})
-        const savedUser = await newUser.save()
-        res.status(201).json(savedUser)
-    } catch (error){
-        res.status(500).json({ error: error.message})
-    }
-})
-
-app.post("/login", async (req, res)=>{
-    try{
-        const {email, password} = req.body
-        const user = await UserModel.findOne({email})
-        if(user){
-            const passKey = await bcrypt.compare(password, user.password)
-            if(passKey){
-                req.session.user = {id:user._id, name:user.name, email:user.email}
-                res.json("Success")
-            }else{
-                res.status(401).json("Password does not match")
-            }
-        }else{
-            res.status(401).json("No records Found")
-        }
-    }catch(error){
-        res.status(500).json({error:error.message})
-    }
-})
-
-app.post("/user", (req, res) => {
-    if(req.session.user){
-        res.json({user: req.session.user})
-    }else{
-        res.status(401).json("Not authenticated")
-    }
+const PORT = 4001; 
+server.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
