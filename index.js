@@ -3,6 +3,7 @@ const path = require("path");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
+// const { getDatabase, ref, onValue } = require("firebase/database");
 
 const app = express();
 const server = http.createServer(app);
@@ -18,6 +19,7 @@ app.use(cors());
 app.use(express.json());
 
 app.use(express.static(path.resolve(__dirname, "../client")));
+
 app.get("*", (req, res) => {
   res.sendFile(path.resolve(__dirname, "../client", "index.html"));
 });
@@ -40,11 +42,18 @@ io.on("connection", (socket) => {
     callback(roomId);
   });
 
-  socket.on("user-connection-room",(userRoomId)=>{
+  socket.on("user-connection-room",({userRoomId, userName})=>{
     socket.join(userRoomId);
     console.log(`User connected to room: ${userRoomId}`);
-    socket.to(userRoomId).emit("user-joined", socket.id);
-  })
+    socket.emit("user-has-connected", userName)
+    socket.to(userRoomId).emit("user-joined", userName);
+  });
+
+  socket.on("user-message-send", ({ userRoomId, userMessage, roomUserName, userMessageTime }) => {
+    socket.to(userRoomId).emit("user-message-receive", {userMessage, roomUserName}); 
+    console.log("User message sent", { userMessage, userRoomId, roomUserName, userMessageTime });
+  });
+  
 
   socket.on("leave-room", (roomId)=>{
     socket.leave(roomId);
