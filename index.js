@@ -42,6 +42,11 @@ io.on("connection", (socket) => {
     callback(roomId);
   });
 
+  socket.on("server-cold-start", (message) => {
+    console.log(message);
+    socket.emit("server-started", "Server is online");
+  })
+
   socket.on("user-connection-room",({userRoomId, userName})=>{
     socket.join(userRoomId);
     console.log(`User connected to room: ${userRoomId}`);
